@@ -70,7 +70,7 @@
 <div id="todopago">
   <ul class="secciones-todopago-config">
     <li><a class="tabs-todopago" todopago="#config">Configuracion</a></li>
-    <li><a class="tabs-todopago" todopago="#prod">Productos</a></li>
+    <!--<li><a class="tabs-todopago" todopago="#prod">Productos</a></li>-->
     <li><a class="tabs-todopago" todopago="#orden">Ordenes</a></li>
   </ul>
   <div id="config">  
@@ -286,12 +286,79 @@ while ($row = tep_db_fetch_array($res)){
     <tr>
         <td>
         <table>
-        <tr><td>Codigo de Producto</td><td><select id="codigo_producto"><option value="">- None -</option><option value="adult_content">adult_content</option><option value="coupon">coupon</option><option value="default">default</option><option value="electronic_good" selected="selected">electronic_good</option><option value="electronic_software">electronic_software</option><option value="gift_certificate">gift_certificate</option><option value="handling_only">handling_only</option><option value="service">service</option><option value="shipping_and_handling">shipping_and_handling</option><option value="shipping_only">shipping_only</option><option value="subscription">subscription</option></select></td></tr>
-        <tr><td>Dias para el Evento</td><td><input id="dias_evento" type="text" value=""/></td></tr>
-        <tr><td>Tipo de Envio</td><td><select id="envio_producto"><option value="">- None -</option><option value="Pickup">Pickup</option><option value="Email">Email</option><option value="Smartphone">Smartphone</option><option value="Other">Other</option></select></td></tr>
-        <tr><td>Tipo de Delivery</td><td><select id="delivery_producto"><option value="">- None -</option><option value="WEB Session">WEB Session</option><option value="Email">Email</option><option value="SmartPhone">SmartPhone</option></select></td></tr>
-        <tr><td>Tipo de Servicio</td><td><select id="servicio_producto"><option value="">- None -</option><option value="Luz">Luz</option><option value="Gas">Gas</option><option value="Agua">Agua</option><option value="TV">TV</option><option value="Cable">Cable</option><option value="Internet">Internet</option><option value="Impuestos">Impuestos</option></select></td></tr>
-        <tr><td colspan="2"><input type="hidden" value="" id="id_producto"/><input id="guardar" type="button" value="Guardar"/></td></tr>
+       <tr>
+    <td>Codigo de Producto</td>
+    <td>
+        <select id="codigo_producto">
+            <option value="">- None -</option>
+            <option value="adult_content">adult_content</option>
+            <option value="coupon">coupon</option>
+            <option value="default">default</option>
+            <option value="electronic_good" selected="selected">electronic_good</option>
+            <option value="electronic_software">electronic_software</option>
+            <option value="gift_certificate">gift_certificate</option>
+            <option value="handling_only">handling_only</option>
+            <option value="service">service</option>
+            <option value="shipping_and_handling">shipping_and_handling</option>
+            <option value="shipping_only">shipping_only</option>
+            <option value="subscription">subscription</option>
+        </select>
+    </td>
+</tr>
+<?php if($segmento=="ticketing"){ ?>
+<tr>
+    <td>Dias para el Evento</td>
+    <td>
+        <input id="dias_evento" type="text" value="" />
+    </td>
+</tr>
+<tr>
+    <td>Tipo de Envio</td>
+    <td>
+        <select id="envio_producto">
+            <option value="">- None -</option>
+            <option value="Pickup">Pickup</option>
+            <option value="Email">Email</option>
+            <option value="Smartphone">Smartphone</option>
+            <option value="Other">Other</option>
+        </select>
+    </td>
+</tr>
+<?php } ?>
+<?php if($segmento=="services"){ ?>
+<tr>
+    <td>Tipo de Delivery</td>
+    <td>
+        <select id="delivery_producto">
+            <option value="">- None -</option>
+            <option value="WEB Session">WEB Session</option>
+            <option value="Email">Email</option>
+            <option value="SmartPhone">SmartPhone</option>
+        </select>
+    </td>
+</tr>
+<tr>
+    <td>Tipo de Servicio</td>
+    <td>
+        <select id="servicio_producto">
+            <option value="">- None -</option>
+            <option value="Luz">Luz</option>
+            <option value="Gas">Gas</option>
+            <option value="Agua">Agua</option>
+            <option value="TV">TV</option>
+            <option value="Cable">Cable</option>
+            <option value="Internet">Internet</option>
+            <option value="Impuestos">Impuestos</option>
+        </select>
+    </td>
+</tr>
+<?php } ?>
+<tr>
+    <td colspan="2">
+        <input type="hidden" value="" id="id_producto" />
+        <input id="guardar" type="button" value="Guardar" />
+    </td>
+</tr>
         </table>
         </td>
     </tr>

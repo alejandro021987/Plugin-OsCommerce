@@ -3,7 +3,8 @@
     require('includes/application_top.php');
     
     require_once(DIR_FS_CATALOG."/includes/modules/payment/todopagoplugin/includes/TodoPago/lib/Sdk.php");
-    
+    require_once DIR_FS_CATALOG.'/includes/modules/payment/todopagoplugin/includes/Logger/loggerFactory.php';
+
     $orderId = $_REQUEST["order_id"];
 
     $sql = "select * from todo_pago_configuracion";
@@ -13,6 +14,10 @@
     if ($row = tep_db_fetch_array($res)){    
     
         $modo = $row["ambiente"]."_";
+
+        $logger = loggerFactory::createLogger(true, substr($modo, 0 , 4), 0, $orderId);
+
+        $logger->info("get Status");
 
         $wsdl = json_decode($row[$modo."wsdl"],1);
         
@@ -26,7 +31,11 @@
     
         $optionsGS = array('MERCHANT'=>$row[$modo."merchant"], 'OPERATIONID'=>$orderId); 
 
+        $logger->info("params getStatus: ".json_encode($optionsGS));
+
         $rta4 = $connector->getStatus($optionsGS);   
+
+        $logger->info("rta get Status: ".json_encode($rta4));
     
         if (isset($rta4["Operations"])){
     

@@ -1,3 +1,4 @@
+
 Instalacion Plugin TodoPago Oscommerce
 
 ## Consideraciones Generales
@@ -18,7 +19,7 @@ La versión de este plug in esta testeada en PHP 5.3-5.4-5.6, Oscommerce 2.3.4
 define('FILENAME_TODOPAGO_CONFIG', 'todopago_config.php');
 
 *admin/includes/languages/english.php agregar la siguiente linea
-define('BOX_TOOLS_TODOPAGO_CONFIG', 'TodoPago Configuraci&oacute;n');
+define('BOX_TOOLS_TODOPAGO_CONFIG', 'TodoPago Configuraci&amp;oacute;n');
 
  *admin/includes/boxes/tools.php agregar la siguiente valor de array
 array(
@@ -35,15 +36,14 @@ Para llegar al menu de configuración ir a:  Tools -> TodoPago Configuración
 En esta pantalla existen 3 tabs
 1. Configuración: Se dan de alta los valores para el funcionamiento de TodoPago.
 
-**Nota:** El AuthorizationHTTP y los WSDL deben ingresarse en formato JSON. Ejemplo:
-* Authorization: { "Authorization":"PRISMA 912EC803B2CE49E4A541068D495AB570"}
-* WSDL’s: { "Operations": "https://developers.todopago.com.ar/services/Operations?wsdl", "Authorize": "https://developers.todopago.com.ar/services/Authorize?wsdl", "PaymentMethods": "https://developers.todopago.com.ar/services/PaymentMethods?wsdl"}
+    **Nota:** El AuthorizationHTTP y los WSDL deben ingresarse en formato JSON. Ejemplo:
+    * Authorization: { "Authorization":"PRISMA 912EC803B2CE49E4A541068D495AB570"}
+    * WSDL’s: { "Operations": "https://developers.todopago.com.ar/services/Operations?wsdl", "Authorize": "https://developers.todopago.com.ar/services/Authorize?wsdl", "PaymentMethods": "https://developers.todopago.com.ar/services/PaymentMethods?wsdl"}
 ![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf1.png)
-
-2. Productos: En esta tab se le asignan los campos a los productos para Prevención de Fraude. Los campos nuevos se agregan automáticamente. Sólo hay que asignar los valores correspondientes a cada producto
+<!--2. Productos: En esta tab se le asignan los campos a los productos para Prevención de Fraude. Los campos nuevos se agregan automáticamente. Sólo hay que asignar los valores correspondientes a cada producto
 ![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf2.png)
-
-3. Ordenes: Aquí estarán las órdenes y el botón para Ver Status para ver las actualizaciones de estado
+-->
+2. Ordenes: Aquí estarán las órdenes y el botón para Ver Status para ver las actualizaciones de estado
 ![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf3.png)
 
 ## Prevención de Fraude

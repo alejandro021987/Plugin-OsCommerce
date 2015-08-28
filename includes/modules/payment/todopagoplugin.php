@@ -7,17 +7,18 @@ Released under the GNU General Public License
 */
 
 set_include_path(get_include_path() . PATH_SEPARATOR . realpath(dirname(__FILE__)));
+require_once dirname(__FILE__).'/todopagoplugin/includes/todopago_ctes.php';
+//require_once dirname(__FILE__).'/todopagoplugin/includes/TodoPagoLogger.php';
+require_once dirname(__FILE__).'/todopagoplugin/includes/Logger/loggerFactory.php';
 require_once dirname(__FILE__).'/todopagoplugin/includes/TodoPago/lib/Sdk.php';
 include_once dirname(__FILE__).'/todopagoplugin/includes/phone.php';
-define('TABLE_TP_ATRIBUTOS' , 'todo_pago_atributos');
-define('TABLE_TP_CONFIGURACION' , 'todo_pago_configuracion');
-define('TABLE_TP_TRANSACCION', 'todopago_transaccion');
 
+require_once dirname(__FILE__).'/todopagoplugin/includes/ControlFraude/includes.php';
 include_once(dirname(__FILE__).DIRECTORY_SEPARATOR.'todopagoplugin'.DIRECTORY_SEPARATOR.'includes'.DIRECTORY_SEPARATOR.'TodopagoTransaccion.php');
 
 class todopagoplugin {
 
-    var $code, $title, $description, $enabled, $logo, $tp_states, $i = 0;
+    var $code, $title, $description, $enabled, $logo, $tp_states;
 
     function todopagoplugin() {
 
@@ -31,7 +32,7 @@ class todopagoplugin {
 
         $this->description = "TodoPago Plugin de pago.";
 
-        $this->api_version = "1.0.0";
+        $this->api_version = TP_VERSION;
 
         $this->sort_order = MODULE_PAYMENT_TODOPAGOPLUGIN_SORT_ORDER;
 
@@ -183,14 +184,9 @@ class todopagoplugin {
 
     function after_process() {
         $dir = DIR_WS_INCLUDES.'work'.DIRECTORY_SEPARATOR.'todopago.log';
-        error_log('returnFalse'.json_encode($_POST).'i'.json_encode($i), 3, $dir);
         
         $this->first_step_todopago();
-        
-        $i++;
-        
 
-        
         return false;
     }
 
@@ -261,13 +257,6 @@ class todopagoplugin {
         $todoPagoConfig = tep_db_query('SELECT * FROM todo_pago_configuracion');
         $todoPagoConfig = tep_db_fetch_array($todoPagoConfig);
 
-        return $todoPagoConfig;
-    }
-
-    private function _create_tp_connector(){
-
-        $todoPagoConfig = $this->_get_tp_configuracion();
-
         if ($todoPagoConfig['ambiente'] == "test"){
             $mode = "test";
             $security =  $todoPagoConfig['test_security'];
@@ -279,134 +268,36 @@ class todopagoplugin {
             $merchant = $todoPagoConfig['production_merchant'];
         }
             $header = json_decode(html_entity_decode($todoPagoConfig['authorization']),TRUE);
-        
 
-        $connector = new TodoPago\Sdk($header, $mode);
-
-        $return = array('connector'=>$connector, 'merchant'=>$merchant, 'security'=>$security, 'config' => $todoPagoConfig);
-
-
-        return $return;
+        return array(
+                'header' => $header,
+                'segmento' => $todoPagoConfig['segmento'],
+                'canal' => $todoPagoConfig['canal'],
+                'mode' => $mode,
+                'deadline' => $todoPagoConfig['deadline'],
+                'security' => $security,
+                'merchant' => $merchant,
+                'estados' => array(
+                    'inicio' => $todoPagoConfig['estado_inicio'],
+                    'aprobada' => $todoPagoConfig['estado_aprobada'],
+                    'rechazada' =>$todoPagoConfig['estado_rechazada'],
+                    'offline' =>$todoPagoConfig['estado_offline']
+                    )
+                 );
     }
 
-    private function _get_common_fields($cart){
+    private function _create_tp_connector(){
 
-        global $customer_id;
-        
-        $logger = new TodoPagoLogger($cart->id);
-
-        $CSITPRODUCTDESCRIPTION = array();
-        $CSITPRODUCTNAME = array();
-        $CSITPRODUCTSKU = array();
-        $CSITTOTALAMOUNT = array();
-        $CSITQUANTITY = array();
-        $CSITUNITPRICE = array();
-        $CSITPRODUCTCODE = array();
-
-        foreach($cart->products as $prod){
-            $descriptonQuery = tep_db_query("SELECT products_description as description FROM products_description WHERE products_id = ".$this->_cleanId($prod['id']));
-            $prod = array_merge($prod, tep_db_fetch_array($descriptonQuery));
-            $string = htmlspecialchars_decode($prod['description']);
-
-                //SANITIZE
-                $re = "/\\[(.*?)\\]|<(.*?)\\>/i";
-                $subst = "";
-                $string = preg_replace($re, $subst, $string);
-
-                $replace = array("!","'","\'","\"","  ","$","#","\\","\n","\r",
-                    '\n','\r','\t',"\t","\n\r",'\n\r','&nbsp;','&ntilde;',".,",",.");
-                $string = str_replace($replace, '', $string);
-
-                $cods = array('\u00c1','\u00e1','\u00c9','\u00e9','\u00cd','\u00ed','\u00d3','\u00f3','\u00da','\u00fa','\u00dc','\u00fc','\u00d1','\u00f1');
-                $susts = array('Á','á','É','é','Í','í','Ó','ó','Ú','ú','Ü','ü','Ṅ','ñ');
-                $string = str_replace($cods, $susts, $string);
-			
-            $CSITPRODUCTDESCRIPTION[] = substr($string,0,17);
-            $CSITPRODUCTNAME[] =  str_replace('#', '', trim(urlencode(htmlentities(strip_tags($prod['name'])))));
-            $CSITPRODUCTSKU[] = str_replace('#', '', $prod['model']);
-            $CSITTOTALAMOUNT[] = number_format(($prod['qty'] * $prod['final_price']),'2','.','');
-            $CSITQUANTITY[] = $prod['qty'];
-            $CSITUNITPRICE[] = number_format($prod['final_price'],'2','.','');
-
-            $customfields = array();
-            $customfields = $this->_get_tp_custom_values($prod['id']);
-
-            if (is_array($customfields)){
-                $haveProductCode = false;
-                foreach($customfields as $customIndex => $customValue){
-
-                    if ($customIndex == 'CSITPRODUCTCODE'){
-                        $CSITPRODUCTCODE[] = trim(urlencode(htmlentities(strip_tags($customValue))));
-                    }
-                }
-                if (!$haveProductCode){
-                    $CSITPRODUCTCODE[] = 'default';
-                }
-            }
-            else{
-                $CSITPRODUCTCODE[] = 'default';
-            }
-        }
+        $connector = new TodoPago\Sdk($this->todoPagoConfig['header'], $this->todoPagoConfig['mode']);
 
 
-        $fields = array(		                        
-            'CSBTCITY' => $cart->billing['state'], 	
-            'CSBTCOUNTRY' => $cart->billing['country']['iso_code_2'], 	
-            'CSBTCUSTOMERID' => $customer_id, 
-            'CSBTIPADDRESS' => $this->_get_todo_pago_client_ip(), 	
-            'CSBTEMAIL' => $cart->customer['email_address'], 		
-            'CSBTFIRSTNAME'=> $cart->customer['firstname'], 
-            'CSBTLASTNAME'=> $cart->customer['lastname'], 
-            'CSBTPHONENUMBER'=> phone::clean($cart->customer['telephone'], $logger), 
-            'CSBTPOSTALCODE'=> $cart->customer['postcode'], 	
-            'CSBTSTATE' => $this->tp_states, 
-            'CSBTSTREET1' => $cart->customer['street_address'] ,				
-            'CSPTCURRENCY'=> $cart->info['currency'],	
-            'CSPTGRANDTOTALAMOUNT' => number_format($cart->info['total'],'2','.',''),
-            'CSMDD7' => $this->_get_days_qty($cart->aditional_info['date_creation']),
-            'CSMDD8' => 'S',
-            'CSMDD9' => $cart->customer_aditional_info['password'],
-            'CSMDD10' => $cart->customer_aditional_info['orders_qty'],
-            'CSMDD11' => phone::clean($cart->customer['telephone'], $logger),
-            'CSITPRODUCTCODE'=>implode('#',$CSITPRODUCTCODE), 
-            'CSITPRODUCTDESCRIPTION'=> implode('#',$CSITPRODUCTDESCRIPTION), 
-            'CSITPRODUCTNAME'=>implode('#',$CSITPRODUCTNAME),		
-            'CSITPRODUCTSKU'=>implode('#',$CSITPRODUCTSKU), 		
-            'CSITTOTALAMOUNT'=> implode('#',$CSITTOTALAMOUNT), 
-            'CSITQUANTITY'=>implode('#',$CSITQUANTITY), 		
-            'CSITUNITPRICE'=>implode('#',$CSITUNITPRICE),
-            'AMOUNT' => number_format($cart->info['total'],'2','.',''),
-            'EMAILCLIENTE' => $cart->customer['email_address'], 		
-        );
-            
-            $logger = new TodoPagoLogger($cart->id);
-            $logger->writeLog('CSBTSTATE', $fields['CSBTSTATE']);
+        //$return = array_merge('connector'=>$connector, 'merchant'=>$merchant, 'security'=>$security, 'header'=>$header, 'config' => $todoPagoConfig);
 
-        return $fields;
 
+        return $connector;
     }
 
-    private function _get_retail_fields($cart){
-        
-        $logger = new TodoPagoLogger($cart->id);
-
-        $fields = array(		
-            'CSSTCITY'=> $cart->delivery['city'], 	
-            'CSSTEMAIL'=> $cart->customer['email_address'], 
-			'CSSTCOUNTRY' => $cart->delivery['country']['iso_code_2'], 	
-			'CSSTSTATE' => $this->tp_states, 
-            'CSSTFIRSTNAME'=> $cart->customer['firstname'], 		
-            'CSSTLASTNAME'=> $cart->customer['lastname'], 		
-            'CSSTPHONENUMBER'=>phone::clean($cart->customer['telephone'], $logger),		
-            'CSSTPOSTALCODE'=> $cart->customer['postcode'],		
-            'CSSTSTREET1'=> $cart->customer['street_address'], 	
-        );
-        
-        $logger = new TodoPagoLogger($cart->id);
-        $logger->writeLog("fields['CSSTATE']", $fields['CSSTATE']);
-
-        return $fields;    
-    }
+    
 
     private function _get_digital_goods_fields(){
 
@@ -495,26 +386,6 @@ class todopagoplugin {
 
     }
 
-    private function _get_todo_pago_client_ip() {
-
-        $ipaddress = '';
-        if ($_SERVER['HTTP_CLIENT_IP'])
-            $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-        else if($_SERVER['HTTP_X_FORWARDED_FOR'])
-            $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        else if($_SERVER['HTTP_X_FORWARDED'])
-            $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-        else if($_SERVER['HTTP_FORWARDED_FOR'])
-            $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-        else if($_SERVER['HTTP_FORWARDED'])
-            $ipaddress = $_SERVER['HTTP_FORWARDED'];
-        else if($_SERVER['REMOTE_ADDR'])
-            $ipaddress = $_SERVER['REMOTE_ADDR'];
-        else
-            $ipaddress = 'UNKNOWN';
-
-        return $ipaddress;
-    }
 
     private function _set_tp_order_status($order_id, $status_id){
 
@@ -589,87 +460,100 @@ class todopagoplugin {
     }
     
     private function _get_customer_aditional_info($customer_id){
-        $query = tep_db_query("SELECT c.customers_password as 'password', ci.customers_info_date_account_created as 'date_creation', COUNT(*) AS 'orders_qty' FROM customers c INNER JOIN customers_info ci ON c.customers_id = ci.customers_info_id INNER JOIN orders o ON ci.customers_info_id = o.customers_id WHERE c.customers_id = ".$customer_id);
+        $query = tep_db_query("SELECT c.customers_id as 'customer_id', c.customers_password as 'password', ci.customers_info_date_account_created as 'date_creation', COUNT(*) AS 'orders_qty' FROM customers c INNER JOIN customers_info ci ON c.customers_id = ci.customers_info_id INNER JOIN orders o ON ci.customers_info_id = o.customers_id WHERE c.customers_id = ".$customer_id);
         return tep_db_fetch_array($query);
     }
-    
-    private function _get_days_qty($date){
-        $date = new DateTime($date);
-        $now = new DateTime();
-        
-        $diff = $date->diff($now);
-        return $diff->days;
-    }
 
-    function first_step_todopago(){
-        global $customer_id, $order, $sendto, $ppe_token, $ppe_payerid, $ppe_secret, $ppe_order_total_check, $HTTP_POST_VARS, $comments, $response_array, $currencies, $insert_id;
+    private function prepare_order() {
+        global $order, $insert_id, $customer_id;
 
         $order->id = $insert_id;
+        $this->todoPagoConfig = $this->_get_tp_configuracion();
+
+        $this->logger = loggerFactory::createLogger(true, $this->todoPagoConfig['mode'], $customer_id, $order->id);
+
         $this->todopagoTransaccion->createRegister($insert_id);
+    }
 
-        include_once("todopagoplugin/includes/TodoPagoLogger.php");
-        $logger = new TodoPagoLogger($order->id);
+    private function get_paydata() {
 
-        if($this->todopagoTransaccion->_getStep($order->id) == TodopagoTransaccion::FIRST_STEP){
+        global $order;
 
-            $logger->writeLog("first step");
-            
-            $post = $_POST;
-            
-            
-            $logger->writeLog("_POST", $post);
-            
-            $logger->writeLog("_POST['tp_states']", $_POST['tp_states']);
-
-            $this->tp_states = $post['tp_states'];
-            
-            $logger->writeLog("this->tp_states", $this->tp_states);
-
-            //if(!isset($_GET['Answer'])){
-
-                $connector_data = $this->_create_tp_connector();
-
-                if(!$connector_data){
-                    echo "El medio de pago TodoPago no está disponible en este momento";
-                    $logger->writeLog("El medio de pago no ha sido configurado");
-                }
-
-                $connector = $connector_data['connector'];
-
-                $optionsSAR_comercio = $this->getOptionsSARComercio($order, $connector_data);
-                $optionsSAR_operacion = $this->getOptionsSAROperacion($order, $connector_data);
-
-                $optionsSAR = array($optionsSAR_comercio, $optionsSAR_operacion);
-                $logger->writeLog("params SAR", $optionsSAR);
-                $rta = $connector->sendAuthorizeRequest($optionsSAR_comercio, $optionsSAR_operacion);
-                $logger->writeLog("response SAR", $rta);
-                if($rta['StatusCode'] == -1){
-                $query = $this->todopagoTransaccion->recordFirstStep($order->id, $optionsSAR, $rta);
-                //$logger->writeLog("query", $query);
-
-                setcookie('RequestKey',$rta["RequestKey"],  time() + (86400 * 30), "/");        
-                header('Location: '.$rta['URL_Request']);
-                die();
-                    
-                }
-//            }
-            else{
-                
-                header('Location: '.tep_href_link('checkout_shipping_retry.php', '', 'SSL'));
-                die(); 
-            }
+        //$this->logger = new TodoPagoLogger($order->id);
+        if (empty($this->todoPagoConfig)) {
+            echo "El medio de pago TodoPago no está disponible en este momento";
+            $this->logger->info("El medio de pago no ha sido configurado");
         }
-        else{
-            $logger->writeLog("No se pudo efectuar el first step, ya se encuentra un first step exitoso reginstrado en la tabla todopago_transaccion");
+
+        $data = $_POST;
+
+        $this->logger->debug("_POST: ".$data);
+
+        $this->logger->debug("_POST['tp_states']: ".$data['tp_states']);
+
+        $this->tp_states = $data['tp_states'];
+
+        $this->logger->debug("this->tp_states: ".$this->tp_states);
+
+        $optionsSAR_comercio = $this->getOptionsSARComercio($order);
+        $optionsSAR_operacion = $this->getOptionsSAROperacion($order);
+
+        return array($optionsSAR_comercio, $optionsSAR_operacion);
+    }
+
+    private function call_SAR($connector, $optionsSAR) {
+        global $order;
+
+        //$this->logger = new TodoPagoLogger($order->id);
+
+        $rta = $connector->sendAuthorizeRequest($optionsSAR[0], $optionsSAR[1]);
+        if ($rta['StatusCode'] == 702 &&
+            ! (empty($this->todoPagoConfig['merchant']) or empty($this->todoPagoConfig['security']) or empty($this->todoPagoConfig['header']))
+        ) {
+            $this->logger->debug("Reintento");
+            $rta = $connector->sendAuthorizeRequest($optionsSAR[0], $optionsSAR[1]);
+        }
+        $this->logger->info("response SAR: ".json_encode($rta));
+        if ($rta['StatusCode'] == TP_STATUS_OK) {
+            $query = $this->todopagoTransaccion->recordFirstStep($order->id, $optionsSAR, $rta);
+            $this->logger->info("query recordFirstStep: ".$query);
+
+            header('Location: '.$rta['URL_Request']);
+            die();
+
+        } else {
+            header('Location: '.tep_href_link('checkout_shipping_retry.php', '', 'SSL'));
+            die();
+        }
+    }
+
+    public function first_step_todopago() {
+        global $order;
+
+        $this->prepare_order();
+
+        if ($this->todopagoTransaccion->_getStep($order->id) == TodopagoTransaccion::FIRST_STEP) {
+
+            $this->logger->info("first step");
+            $connector = $this->_create_tp_connector();
+
+            $optionsSAR = $this->get_paydata();
+
+            $this->logger->info("params SAR: ".json_encode($optionsSAR));
+
+            $this->call_SAR($connector, $optionsSAR);
+        } else {
+            $this->logger->warn("No se pudo efectuar el first step, ya se encuentra un first step exitoso registrado en la tabla todopago_transaccion");
             header('Location: '.tep_href_link('index.php', '', 'SSL'));
             die();
         }
+
         return false;
     }
 
-    function getOptionsSARComercio($order, $connector_data){
-        $security_code = $connector_data['security'];
-        $merchant = $connector_data['merchant'];
+    private function getOptionsSARComercio($order){
+        $security_code = $this->todoPagoConfig['security'];
+        $merchant = $this->todoPagoConfig['merchant'];
 
         $optionsSAR_comercio = array (
             'URL_OK' => tep_href_link('second_step_todopago.php?Order='.$order->id, '', 'SSL'),
@@ -681,55 +565,27 @@ class todopagoplugin {
         return $optionsSAR_comercio;
     }
 
-    function getOptionsSAROperacion($order, $connector_data){
+    private function getOptionsSAROperacion($order){
 
         global $customer_id;
         
-        $merchant = $connector_data['merchant']; 
-        $config_tp = $connector_data['config'];
+        $merchant = $this->todoPagoConfig['merchant'];
         
+        $order->delivery['tp_state'] = $this->tp_states;
+        $order->billing['tp_state'] = $this->tp_states;
         $order->customer_aditional_info = $this->_get_customer_aditional_info($customer_id);
-
-        $optionsSAR_operacion = $this->_get_common_fields($order);          
-
-        switch($config_tp['segmento']){
-
-            case 'retail':  
-            $extra_fields = $this->_get_retail_fields($order);
-            break;
-
-            case 'ticketing':
-            $extra_fields = $this->_get_ticketing_fields($order);
-            break;
-
-            case 'services':
-            $extra_fields = $this->_get_services_fields($order);
-            break;
-
-            case 'digital':
-            $extra_fields = $this->_get_digital_goods_fields($order);
-            break;
-
-            default:
-            $extra_fields = $this->_get_retail_fields($order);
-            break;
-        }
-
-        $optionsSAR_operacion = array_merge($optionsSAR_operacion, $extra_fields);   
+        
+        $controlFraude = ControlFraudeFactory::get_ControlFraude_extractor($this->todoPagoConfig['segmento'], $order, $this->logger);
+        $optionsSAR_operacion = $controlFraude->getDataCF();
 
         $optionsSAR_operacion['MERCHANT'] = $merchant;
         $optionsSAR_operacion['CURRENCYCODE'] = '032';
-        $optionsSAR_operacion['CSPTCURRENCY'] =  'ARS';
         $optionsSAR_operacion['OPERATIONID'] = $order->id;
-        $optionsSAR_operacion['CSBTCOUNTRY'] = $order->customer['country']['iso_code_2'];
-
-        $optionsSAR_operacion['CSSTSTATE'] = 	$this->tp_states;
-        $optionsSAR_operacion['CSSTCOUNTRY'] = $order->customer['country']['iso_code_2'];
         $optionsSAR_operacion['AMOUNT'] = $order->info['total'];
+//        
+        //$this->logger = new TodoPagoLogger($order->id);
+        $this->logger->debug("optionsSAR_operacion: ".json_encode($optionsSAR_operacion));
         
-        $logger = new TodoPagoLogger($order->id);
-        $logger->writeLog("optionSAR_operacion['CSSTATE']", $optionSAR_operacion['CSSTATE']);
-
         return $optionsSAR_operacion;
     }
 }

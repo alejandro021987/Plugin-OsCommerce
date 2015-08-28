@@ -46,7 +46,7 @@ class TodopagoTransaccion {
             $requestKey = $responseSAR['RequestKey'];
             $publicRequestKey = $responseSAR['PublicRequestKey'];
             
-            $query = "UPDATE todopago_transaccion SET first_step = '".$datetime->format('Y-m-d H:i:s')."', params_SAR = '".json_encode($paramsSAR)."', response_SAR = '".json_encode($responseSAR)."', request_key = '".$requestKey."', public_request_key = '".$publicRequestKey."' WHERE id_orden = ".$orderId;
+            $query = "UPDATE todopago_transaccion SET first_step = '".$datetime->format('Y-m-d H:i:s')."', params_SAR = '".tep_db_input(tep_db_prepare_input(json_encode($paramsSAR)))."', response_SAR = '".tep_db_input(tep_db_prepare_input(json_encode($responseSAR)))."', request_key = '".tep_db_input(tep_db_prepare_input($requestKey))."', public_request_key = '".tep_db_input(tep_db_prepare_input($publicRequestKey))."' WHERE id_orden = ".$orderId;
             tep_db_query($query);
             return $query;
         }
