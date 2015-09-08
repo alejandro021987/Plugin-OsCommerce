@@ -136,8 +136,8 @@ abstract class ControlFraude{
 			$productcode_array[] = $this->_getProductCode($item['id']);
 
             $descriptonQuery = tep_db_query("SELECT products_description as description FROM products_description WHERE products_id = ".$item['id'].";");
-			$_description = tep_db_fetch_array($descriptonQuery)['description'];
-			$_description = $this->getField($_description);
+			$queryResult = tep_db_fetch_array($descriptonQuery);
+			$_description = $queryResult['description'];
 			$_description = trim($_description);
 			$_description = substr($_description, 0,15);
 			$description_array [] = str_replace("#","",$_description);

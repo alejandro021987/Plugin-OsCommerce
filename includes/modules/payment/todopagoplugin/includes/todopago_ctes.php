@@ -1,5 +1,5 @@
 <?php
-define('TP_VERSION', '1.1.0');
+define('TP_VERSION', '1.2.0');
 define('TP_LOGDIR', dirname(__FILE__).'/../../../../work/todopago.log');
 define('TP_LOGLEVEL', 'debug');
 define('TP_STATUS_OK', -1);
