@@ -28,6 +28,7 @@ array(
         'link' => tep_href_link(FILENAME_TODOPAGO_CONFIG)
       )
 
+Observación: Descomentar <strong>extension=php_soap.dll</strong> y <strong>extension=php_openssl.dll</strong> del php.ini, ya que para la conexión al gateway se utiliza la clase SoapClient del API de PHP.
 
 
 ##Configuración
