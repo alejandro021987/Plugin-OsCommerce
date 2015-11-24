@@ -8,18 +8,30 @@
 */
 
     require('includes/application_top.php');
+    require_once dirname(__FILE__).'/../includes/modules/payment/todopagoplugin/includes/TodoPago/lib/Sdk.php';
+    require_once dirname(__FILE__).'/../includes/modules/payment/todopagoplugin/includes/todopago_ctes.php';
     
     require(DIR_WS_INCLUDES . 'template_top.php');
-    $mensaje =""; 
+    $mensaje ="";
     
-    if (isset($_POST["submit"])){
-    
-        unset($_POST["submit"]);
+    //valida y guarda codigo de autorizacion
+    if (isset($_POST["authorization"]) && isset($_POST["submit"])){
+
+        $autorization_post = str_replace('\"', '"', $_POST["authorization"]);
+
+        if(json_decode($autorization_post) == NULL) {
+            //armo json de autorization        
+            $autorizationId = new stdClass();
+            $autorizationId->Authorization = $_POST["authorization"];
+            $_POST["authorization"] = json_encode($autorizationId);
+        }
         
+	unset($_POST["submit"]);
         $query = "update todo_pago_configuracion set ";
         
         foreach($_POST as $key=>$value){
-        $query .= $key. "='".$value."',";
+
+            $query .= $key. "='".$value."',";
         
         }
         
@@ -29,12 +41,12 @@
         
         $mensaje = "La configuracion se guardo correctamente";
     }
-    
+    //obtengo elementos del formulario
     $sql = "select * from todo_pago_configuracion";
     $res = tep_db_query($sql);
     $row = tep_db_fetch_array($res);
-    
-    
+
+    $autorization = json_decode($row['authorization']);
    
 ?>
 <link rel="stylesheet" type="text/css" href="../includes/modules/payment/todopagoplugin/todopago.css"/>
@@ -51,13 +63,13 @@
       <tr>
         <td><table border="0" width="100%" cellspacing="0" cellpadding="2" height="40">
           <tr>
-            <td class="pageHeading">TodoPago | Configuraci&oacute;n </td>
+            <td class="pageHeading">TodoPago (v. <?php echo TP_VERSION; ?>) | Configuraci&oacute;n </td>
             <td align="right"></td>
             <td class="smallText" align="right"></td>
           </tr>
           <tr>
           <td colspan="3">
-          <img src="../includes/modules/payment/todopagoplugin/includes/todopago.jpg" />
+          <img src="http://www.todopago.com.ar/sites/todopago.com.ar/files/pluginstarjeta.jpg" />
           </td>
           </tr>
         </table></td>
@@ -70,14 +82,14 @@
 <div id="todopago">
   <ul class="secciones-todopago-config">
     <li><a class="tabs-todopago" todopago="#config">Configuracion</a></li>
-    <!--<li><a class="tabs-todopago" todopago="#prod">Productos</a></li>-->
+    <li><a class="tabs-todopago" todopago="#prod">Productos</a></li>
     <li><a class="tabs-todopago" todopago="#orden">Ordenes</a></li>
   </ul>
   <div id="config">  
-        <form action="" method="post">
+        <form id="form" action="" method="post">
         <div class="input-todopago">
-        <label>Authorization HTTP</label>
-<input type="text" value='<?php echo  (isset($row["authorization"])?$row["authorization"]:"")?>' placeholder="Authorization HTTP" name="authorization"/>
+        <label>Authorization HTTP (c&oacute;digo de autorizacion)</label>
+<input type="text" value='<?php echo  (isset($autorization->Authorization)? $autorization->Authorization:"")?>' placeholder="Authorization HTTP" name="authorization"/>           
         </div>
 
 <?php
@@ -128,23 +140,23 @@ $ambiente = (isset($row["ambiente"])?$row["ambiente"]:"");
 <div class="subtitulo-todopago">AMBIENTE DESARROLLO</div>
 
 <div class="input-todopago">
-<label>ID Site Todo Pago</label>
+<label>ID Site Todo Pago (Merchant ID)</label>
 <input type="text" value="<?php echo  (isset($row["test_merchant"])?$row["test_merchant"]:"")?>" placeholder="ID Site Todo Pago" name="test_merchant"/>
 </div>
 
 <div class="input-todopago">
-<label>Security Code</label>
+<label>Security Code (Key sin PRISMA/TOD.. ni espacio)</label>
 <input type="text" value="<?php echo  (isset($row["test_security"])?$row["test_security"]:"")?>" placeholder="Security Code" name="test_security"/>
 </div>
 <div class="subtitulo-todopago">AMBIENTE PRODUCCION</div>
 
 <div class="input-todopago">
-<label>ID Site Todo Pago</label>
+<label>ID Site Todo Pago (Merchant ID)</label>
 <input type="text" value="<?php echo  (isset($row["production_merchant"])?$row["production_merchant"]:"")?>" placeholder="ID Site Todo Pago" name="production_merchant"/>
 </div>
 
 <div class="input-todopago">
-<label>Security Code</label>
+<label>Security Code (Key sin PRISMA/TOD.. ni espacio)</label>
 <input type="text" value="<?php echo  (isset($row["production_security"])?$row["production_security"]:"")?>" placeholder="Security Code" name="production_security"/>
 </div> 
 <div class="subtitulo-todopago">ESTADOS DE LA ORDEN</div>
@@ -267,8 +279,7 @@ while ($row = tep_db_fetch_array($res)){
         if ($row2["CSMDD33"] != "") $diasEvento = $row2["CSMDD33"];
         if ($row2["CSMDD34"] != "") $tipoEnvio = $row2["CSMDD34"];
         if ($row2["CSMDD28"] != "") $tipoServicio = $row2["CSMDD28"];
-        if ($row2["CSMDD31"] != "") $tipoDelivery = $row2["CSMDD31"];
-        
+        if ($row2["CSMDD31"] != "") $tipoDelivery = $row2["CSMDD31"];       
     }
     $i=$row["products_id"];
  echo "<tr><td>".$row["products_id"]."</td><td id='nombre".$i."'>".$row["products_name"]."</td><td id='codigo".$i."'>".$codigoProducto."</td><td id='evento".$i."'>".$diasEvento."</td><td id='envio".$i."'>".$tipoEnvio."</td><td id='servicio".$i."'>".$tipoServicio."</td><td id='delivery".$i."'>".$tipoDelivery."</td><td class='editar' id='".$i."'>Editar</td></tr>";

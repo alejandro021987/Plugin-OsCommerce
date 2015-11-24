@@ -34,21 +34,29 @@ Observación: Descomentar <strong>extension=php_soap.dll</strong> y <strong>exte
 ##Configuración
 ####Configuración plug in
 Para llegar al menu de configuración ir a:  Tools -> TodoPago Configuración 
-En esta pantalla existen 3 tabs
-1. Configuración: Se dan de alta los valores para el funcionamiento de TodoPago.
+En esta pantalla existen 3 tabs:
 
-    **Nota:** El AuthorizationHTTP y los WSDL deben ingresarse en formato JSON. Ejemplo:
-    * Authorization: { "Authorization":"PRISMA 912EC803B2CE49E4A541068D495AB570"}
-    * WSDL’s: { "Operations": "https://developers.todopago.com.ar/services/Operations?wsdl", "Authorize": "https://developers.todopago.com.ar/services/Authorize?wsdl", "PaymentMethods": "https://developers.todopago.com.ar/services/PaymentMethods?wsdl"}
+a. Configuración: Se dan de alta los valores para el funcionamiento de TodoPago.
+
+        Authorization HTTP: Codigo de autorización otorgado por Todo Pago. Ejemplo: PRISMA 912EC803B2CE49E4A541068D12345678
+        Security Code: Código provisto por Todo Pago<br>
+        ID Site Todo Pago: Nombre de comercio provisto por Todo Pago<br>
+        End Point: Provisto por Todo Pago (es una url)<br>
+        WSDL: WSDLs en formato JSON. Ejemplo: {"Authorize":"https://developers.todopago.com.ar/services/Authorize?wsdl","PaymentMethods":"https://developers.todopago.com.ar/services/PaymentMethods?wsdl","Operations":"https://developers.todopago.com.ar/services/Operations?wsdl"}                    
+    
 ![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf1.png)
-<!--2. Productos: En esta tab se le asignan los campos a los productos para Prevención de Fraude. Los campos nuevos se agregan automáticamente. Sólo hay que asignar los valores correspondientes a cada producto
-![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf2.png)
--->
-2. Ordenes: Aquí estarán las órdenes y el botón para Ver Status para ver las actualizaciones de estado
+
+<sub>Estados de ordenes</sub>
+
+![imagen de configuracion](https://github.com/TodoPago/imagenes/blob/8244bd91d750bf50b192354b5c5bf85eb06cc213/oscommerce/conf4.png)
+
+b. Ordenes: Aquí estarán las órdenes y el botón para Ver Status para ver las actualizaciones de estado
+
 ![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf3.png)
 
 ## Prevención de Fraude
 Los campos se crean automáticamente y se asignan en Tools -> TodoPago Configuración -> Productos
+
 
 ####Consideraciones Generales (para todas las verticales, por defecto RETAIL)
 El plug in, toma valores estándar del framework para validar los datos del comprador.
@@ -65,6 +73,40 @@ Este es un ejemplo de la mayoría de los campos que se necesitan para comenzar l
 'CSBTPOSTALCODE'=> $cart->customer['postcode'], 	
 'CSBTSTATE' => $this->tp_states, 
 'CSBTSTREET1' => $cart->customer['street_address'] ,	
+
+
+## Tablas de Referencia
+######[Provincias](#p)
+
+<a name="p"></a>
+<p>Provincias</p>
+<table>
+<tr><th>Provincia</th><th>Código</th></tr>
+<tr><td>CABA</td><td>C</td></tr>
+<tr><td>Buenos Aires</td><td>B</td></tr>
+<tr><td>Catamarca</td><td>K</td></tr>
+<tr><td>Chaco</td><td>H</td></tr>
+<tr><td>Chubut</td><td>U</td></tr>
+<tr><td>Córdoba</td><td>X</td></tr>
+<tr><td>Corrientes</td><td>W</td></tr>
+<tr><td>Entre Ríos</td><td>R</td></tr>
+<tr><td>Formosa</td><td>P</td></tr>
+<tr><td>Jujuy</td><td>Y</td></tr>
+<tr><td>La Pampa</td><td>L</td></tr>
+<tr><td>La Rioja</td><td>F</td></tr>
+<tr><td>Mendoza</td><td>M</td></tr>
+<tr><td>Misiones</td><td>N</td></tr>
+<tr><td>Neuquén</td><td>Q</td></tr>
+<tr><td>Río Negro</td><td>R</td></tr>
+<tr><td>Salta</td><td>A</td></tr>
+<tr><td>San Juan</td><td>J</td></tr>
+<tr><td>San Luis</td><td>D</td></tr>
+<tr><td>Santa Cruz</td><td>Z</td></tr>
+<tr><td>Santa Fe</td><td>S</td></tr>
+<tr><td>Santiago del Estero</td><td>G</td></tr>
+<tr><td>Tierra del Fuego</td><td>V</td></tr>
+<tr><td>Tucumán</td><td>T</td></tr>
+</table>
 
 ####Muy Importante
 Provincias: Al ser un campo MANDATORIO para enviar y propio del plugin este campo se completa por parte del usuario al momento del check out.
