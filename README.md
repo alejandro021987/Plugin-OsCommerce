@@ -1,10 +1,22 @@
+<a name="inicio"></a>
+Oscommerce-plugin
+============
+Plug in para la integración con gateway de pago <strong>Todo Pago</strong>
+- [Consideraciones Generales](#consideracionesgenerales)
+- [Instalación](#instalacion)
+- [Configuración plugin](#confplugin)
+- [Devoluciones] (#devoluciones)
+- [Datos adiccionales para prevención de fraude](#cybersource) 
+- [Tablas de referencia](#tablas)
 
 Instalacion Plugin TodoPago Oscommerce
 
+<a name="consideracionesgenerales"></a>
 ## Consideraciones Generales
 El plug in de pagos de Todo Pago, provee a las tiendas Oscommerce de un nuevo m&eacute;todo de pago, integrando la tienda al gateway de pago.
 La versión de este plug in esta testeada en PHP 5.3-5.4-5.6, Oscommerce 2.3.4
 
+<a name="instalacion"></a>
 ## Instalación
 1.  Subir los archivos a la raíz del sitio
 2.  Modules -> Payment -> Install Module -> TodoPago -> Install
@@ -30,7 +42,7 @@ array(
 
 Observación: Descomentar <strong>extension=php_soap.dll</strong> y <strong>extension=php_openssl.dll</strong> del php.ini, ya que para la conexión al gateway se utiliza la clase SoapClient del API de PHP.
 
-
+<a name="confplugin"></a>
 ##Configuración
 ####Configuración plug in
 Para llegar al menu de configuración ir a:  Tools -> TodoPago Configuración 
@@ -54,6 +66,16 @@ b. Ordenes: Aquí estarán las órdenes y el botón para Ver Status para ver las
 
 ![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf3.png)
 
+c. Para las devoluciones se debe agregar los estados "Refund" y "Partial Refund", desde la seccion, Admin -> Localization -> Order Status.
+
+<a name="devoluciones"></a>
+##Devoluciones
+TodoPago permite realizar la devolucion total o parcial de dinero de una orden de compra.<br> 
+Para ello dirigirse en el menú a Tools->TodoPago configuracion->Ordenes, en esta pagina se encuentra las ordenes de compra realizadas con Todopago.<br> 
+En cada orden se encuentra la opcion "Devolver" que mostrara un modal con la opcion de devolucion total y devolucion parcial junto con el campo para ingresar el monto.<br><br>
+![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/devoluciones-modal.png)
+
+<a name="cybersource"></a>
 ## Prevención de Fraude
 Los campos se crean automáticamente y se asignan en Tools -> TodoPago Configuración -> Productos
 
@@ -74,7 +96,7 @@ Este es un ejemplo de la mayoría de los campos que se necesitan para comenzar l
 'CSBTSTATE' => $this->tp_states, 
 'CSBTSTREET1' => $cart->customer['street_address'] ,	
 
-
+<a name="tablas"></a>
 ## Tablas de Referencia
 ######[Provincias](#p)
 

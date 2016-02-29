@@ -14,11 +14,10 @@
     require(DIR_WS_INCLUDES . 'template_top.php');
     $mensaje ="";
     
-    //valida y guarda codigo de autorizacion
-    if (isset($_POST["authorization"]) && isset($_POST["submit"])){
-
+    if (isset($_POST["authorization"])){
+        
         $autorization_post = str_replace('\"', '"', $_POST["authorization"]);
-
+        
         if(json_decode($autorization_post) == NULL) {
             //armo json de autorization        
             $autorizationId = new stdClass();
@@ -26,7 +25,7 @@
             $_POST["authorization"] = json_encode($autorizationId);
         }
         
-	unset($_POST["submit"]);
+	    unset($_POST["submit"]);
         $query = "update todo_pago_configuracion set ";
         
         foreach($_POST as $key=>$value){
@@ -45,8 +44,9 @@
     $sql = "select * from todo_pago_configuracion";
     $res = tep_db_query($sql);
     $row = tep_db_fetch_array($res);
-
     $autorization = json_decode($row['authorization']);
+    $medios_pago = json_decode($row['medios_pago'], 1);
+
    
 ?>
 <link rel="stylesheet" type="text/css" href="../includes/modules/payment/todopagoplugin/todopago.css"/>
@@ -83,6 +83,7 @@
   <ul class="secciones-todopago-config">
     <li><a class="tabs-todopago" todopago="#config">Configuracion</a></li>
     <li><a class="tabs-todopago" todopago="#prod">Productos</a></li>
+    <!--li><a class="tabs-todopago" todopago="#mediosdepago">Medios de Pago</a></li-->
     <li><a class="tabs-todopago" todopago="#orden">Ordenes</a></li>
   </ul>
   <div id="config">  
@@ -239,6 +240,19 @@ foreach($opciones as $key=>$value){
 
 </select>
 </div>
+
+<!--div class="subtitulo-todopago">FORMULARIO DE PAGO</div>
+
+<div class="input-todopago">
+    <label style="float:left;">Seleccion el tipo de formulario de pago</label>
+    <div style="float:left;">
+        <div style="margin-bottom:8px;"><input type="radio" name="tipo_formulario" value="0" <?php echo ($row['tipo_formulario'] == 0)?'checked="checked"' :'' ?> >Formulario externo<br></div>
+        <div><input type="radio" name="tipo_formulario" value="1" <?php echo ($row['tipo_formulario'] == 1)?'checked="checked"' :'' ?> >Formulario integrado al e-commerce</div>
+    </div>  
+    <div style="clear:both;"></div>  
+</div>
+<br><br-->
+
 <input  type="submit" name="submit" value="Guardar Datos"/>
 </form>
 </div>
@@ -440,7 +454,14 @@ $('#data-table').dataTable(
 
 <tr>
 
-<td>ID</td><td>Nombre</td><td>Telefono</td><td>Email</td><td>Fecha</td><td>Status</td><td>Editar</td>
+                                            <td>ID</td>
+                                            <td>Nombre</td>
+                                            <td>Telefono</td>
+                                            <td>Email</td>
+                                            <td>Fecha</td>
+                                            <td>Status</td>
+                                            <td>Devoluci&oacute;n</td>
+                                            <td>GetStatus</td>
 
 </tr> 
 
@@ -456,19 +477,40 @@ $res = tep_db_query($sql);
 $i =0;
 while ($row = tep_db_fetch_array($res)){ 
     
- echo "<tr><td>".$row["orders_id"]."</td><td>".$row["customers_name"]."</td><td>".$row["customers_telephone"]."</td><td>".$row["customers_email_address"]."</td><td>".$row["date_purchased"]."</td><td>".$row["orders_status_name"]."</td><td class='status' id='".$row["orders_id"]."' style='cursor:pointer'>Ver Status</td></tr>";
+ echo "<tr><td>".$row["orders_id"]."</td><td>".$row["customers_name"]."</td><td>".$row["customers_telephone"]."</td><td>".$row["customers_email_address"]."</td><td>".$row["date_purchased"]."</td><td>".$row["orders_status_name"]."</td><td class='refund-td' data-order_id='".$row["orders_id"]."' style='cursor:pointer'>Devolver</td><td class='status' id='".$row["orders_id"]."' style='cursor:pointer'>Ver Status</td></tr>";
 }
     
 
 ?>
-</tbody>
-</table> 
-<div id="status-orders">
-<div class="close-status-todopago">x</div>
-<div id="status">
+                                </tbody>
+                                </table>
+                                <div id="status-orders" class="order-action-popup">
+                                    <div class="close-status-todopago close-todopago">x</div>
+                                    <div id="status">
 
-</div>
-</div>
+                                    </div>
+                                </div>
+
+                                <div id="refund-dialog" class="order-action-popup" hidden="hidden" style="display:block;">
+                                    <div id="refund-form">
+                                        <div class="close-refund-todopago close-todopago">x</div>
+                                        <input type="hidden" id="order-id-hidden" />
+                                        <label for="refund-type-select">Elija el tipo de devolucion: </label>
+                                        <select id="refund-type-select" name="refund-type">
+                                            <option value="total" selected="selected">Total</option>
+                                            <option value="parcial">Parcial</option>
+                                        </select>
+                                        <p id="amount-div" hidden="hidden">
+                                            <label for="amount-input">Monto: $</label>
+                                            <input type="number" id="amount-input" name="amount" min=0.01 step=0.01 />
+                                            <span id="invalid-amount-message" style="color: red;"><br />Ingrese un monto</span>
+                                        </p>
+                                        <p style="text-align: right;">
+                                            <button id="refund-button">Devolver</button>
+                                        </p>
+                                    </div>
+                                    <div id="refund-result"></div>
+                                </div>
 
 </div>
 </div>
@@ -476,57 +518,102 @@ while ($row = tep_db_fetch_array($res)){
 <script>
 $(document).ready(function(){
 
-$('.close-status-todopago').click(function(){
-        $('#status-orders').hide();
-    });
-    
-$(".status").click(function(){
-        
-        $('#status-orders').hide();
-        $.post( "ext/modules/payment/todopago/todo_pago_status_ajax.php", 
-            { order_id:$(this).attr("id") 
-              
-            }, function( data ) {
-                
-                $("#status").html(data);
-                $('#status-orders').show();
-            })});
+                                $('.close-status-todopago').click(function() {
+                                    $('#status-orders').hide();
+                                });
 
-   
-$('#orders-table').dataTable(
-                {bFilter: true, 
-                bInfo: true,
-                bPaginate :true
+                                $(".status").click(function() {
+                                    $('.order-action-popup').hide();
+                                    $.post( "ext/modules/payment/todopago/todo_pago_status_ajax.php",
+                                           { order_id:$(this).attr("id"),
+
+                                                         }, function( data ) {
+
+                                                $("#status").html(data);
+                                            $('#status-orders').show();
+                                        });
+                                });
+
+                                //Devoluciones
+                                $(".close-refund-todopago").click(function() {
+                                    $('#refund-dialog').hide();
+                                    $('#refund-result').hide();
+                                })
+                                $("#orders-table").on("click", ".refund-td", function refundTd_click() {
+                                    $('.order-action-popup').hide();
+                                    $('#order-id-hidden').val($(this).attr("data-order_id"));
+                                    $("#refund-result").hide();
+                                    $("#invalid-amount-message").hide();
+                                    $("#amount-input").val("");
+                                    $('#refund-form').show();
+                                    $('#refund-dialog').show();
+                                });
+
+                                $("#refund-type-select").change(function refundTypeSelect_change() {
+                                    if ($(this).val() == 'parcial') {
+                                        $("#amount-div").show();
+                                    } else {
+                                        $("#amount-div").hide();
+                                    }
+                                });
+
+                                $("#refund-button").click(function refundButton_click() {
+                                    if (isValidAmount()) {
+                                        $.post("ext/modules/payment/todopago/todo_pago_devoluciones_ajax.php", {
+                                            order_id: $("#order-id-hidden").val(),
+                                            refund_type: $("#refund-type-select").val(),
+                                            amount: $("#amount-input").val()
+                                        }, function(response) {
+                                            $("#refund-form").hide();
+                                            $("#refund-result").html(response);
+                                            $("#refund-result").show();
+                                        })
+                                    }
+                                    else {
+                                        $("#invalid-amount-message").show();
+                                    }
+                                });
+                            });
+
+
+
+                            $('#orders-table').dataTable({
+                            bFilter: true,
+                            bInfo: true,
+                            bPaginate: true,
+                            });
+                        </script>
+                    </td>
+                </tr>
+            </table>
+            <!--</td>
+            </tr>
+            </table>-->
+            <script>
+                $(document).ready(function() {
+
+                    $("#prod").hide();
+                    $("#orden").hide();
+
+                    $(".tabs-todopago").each(function() {
+                        $(this).css("cursor", "pointer");
+
+                    })
+                    $(".tabs-todopago").click(function() {
+                        $("#config").hide();
+                        $("#prod").hide();
+                        $("#orden").hide();
+
+                        $("" + $(this).attr("todopago") + "").show();
+                    })
+
                 });
-  })  
 
-</script>
-</td>
-          </tr>
-        </table></td>
-      </tr>
-    </table>
-  <script>
-  $(document).ready(function(){
- 
-    $("#prod").hide();
-    $("#orden").hide();
-
-  $(".tabs-todopago").each(function(){
-    $(this).css("cursor","pointer");
-    
-  })
-  $(".tabs-todopago").click(function(){
-    $("#config").hide();
-       $("#prod").hide();
-    $("#orden").hide();  
-  
-    $(""+$(this).attr("todopago")+"").show();
-  })
-  
-    })  
-  </script>
-<?php
-  require(DIR_WS_INCLUDES . 'template_bottom.php');
+                function isValidAmount() {
+                    return (($("#refund-type-select").val() == 'parcial' && !isNaN($("#amount-input").val()) && isFinite($("#amount-input").val()) && $("#amount-input").val() != "") || $("#refund-type-select").val() == 'total');
+                }
+            </script>
+    </body>
+    <?php
   require(DIR_WS_INCLUDES . 'application_bottom.php');
 ?>

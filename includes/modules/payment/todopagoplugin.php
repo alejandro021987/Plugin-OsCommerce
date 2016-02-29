@@ -217,11 +217,11 @@ class todopagoplugin {
 
         tep_db_query("CREATE TABLE IF NOT EXISTS `".TABLE_TP_ATRIBUTOS."` ( `product_id` BIGINT NOT NULL , `CSITPRODUCTCODE` VARCHAR(150) NOT NULL COMMENT 'Codigo del producto' , `CSMDD33` VARCHAR(150) NOT NULL COMMENT 'Dias para el evento' , `CSMDD34` VARCHAR(150) NOT NULL COMMENT 'Tipo de envio' , `CSMDD28` VARCHAR(150) NOT NULL COMMENT 'Tipo de servicio' , `CSMDD31` VARCHAR(150) NOT NULL COMMENT 'Tipo de delivery' ) ENGINE = MyISAM;");
 
-        tep_db_query("CREATE TABLE IF NOT EXISTS `".TABLE_TP_CONFIGURACION."` ( `idConf` INT NOT NULL PRIMARY KEY, `authorization` VARCHAR(100) NOT NULL , `segmento` VARCHAR(100) NOT NULL , `canal` VARCHAR(100) NOT NULL , `ambiente` VARCHAR(100) NOT NULL , `deadline` VARCHAR(100) NOT NULL , `test_endpoint` TEXT NOT NULL , `test_wsdl` TEXT NOT NULL , `test_merchant` VARCHAR(100) NOT NULL , `test_security` VARCHAR(100) NOT NULL , `production_endpoint` TEXT NOT NULL , `production_wsdl` TEXT NOT NULL , `production_merchant` VARCHAR(100) NOT NULL , `production_security` VARCHAR(100) NOT NULL , `estado_inicio` VARCHAR(100) NOT NULL , `estado_aprobada` VARCHAR(100) NOT NULL , `estado_rechazada` VARCHAR(100) NOT NULL , `estado_offline` VARCHAR(100) NOT NULL ) ENGINE = MyISAM;");
+        tep_db_query("CREATE TABLE IF NOT EXISTS `".TABLE_TP_CONFIGURACION."` ( `idConf` INT NOT NULL PRIMARY KEY, `authorization` VARCHAR(100) NOT NULL , `segmento` VARCHAR(100) NOT NULL , `canal` VARCHAR(100) NOT NULL , `ambiente` VARCHAR(100) NOT NULL , `deadline` VARCHAR(100) NOT NULL , `test_endpoint` TEXT NOT NULL , `test_wsdl` TEXT NOT NULL , `test_merchant` VARCHAR(100) NOT NULL , `test_security` VARCHAR(100) NOT NULL , `production_endpoint` TEXT NOT NULL , `production_wsdl` TEXT NOT NULL , `production_merchant` VARCHAR(100) NOT NULL , `production_security` VARCHAR(100) NOT NULL , `estado_inicio` VARCHAR(100) NOT NULL , `estado_aprobada` VARCHAR(100) NOT NULL , `estado_rechazada` VARCHAR(100) NOT NULL , `tipo_formulario` TINYINT UNSIGNED DEFAULT 0, `estado_offline` VARCHAR(100) NOT NULL ) ENGINE = MyISAM;");
 
         tep_db_query("DELETE FROM `".TABLE_TP_CONFIGURACION."`");
 
-        tep_db_query("INSERT INTO `".TABLE_TP_CONFIGURACION."` (`idConf`, `authorization`, `segmento`, `canal`, `ambiente`, `deadline`, `test_endpoint`, `test_wsdl`, `test_merchant`, `test_security`, `production_endpoint`, `production_wsdl`, `production_merchant`, `production_security`, `estado_inicio`, `estado_aprobada`, `estado_rechazada`, `estado_offline`) VALUES ('1', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')");
+        tep_db_query("INSERT INTO `".TABLE_TP_CONFIGURACION."` (`idConf`, `authorization`, `segmento`, `canal`, `ambiente`, `deadline`, `test_endpoint`, `test_wsdl`, `test_merchant`, `test_security`, `production_endpoint`, `production_wsdl`, `production_merchant`, `production_security`, `estado_inicio`, `estado_aprobada`, `estado_rechazada`, `tipo_formulario`, `estado_offline`) VALUES ('1', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')");
 
         tep_db_query("CREATE TABLE IF NOT  EXISTS `".TABLE_TP_TRANSACCION."` (
                                                                `id` INT NOT NULL AUTO_INCREMENT,
@@ -277,6 +277,7 @@ class todopagoplugin {
                 'deadline' => $todoPagoConfig['deadline'],
                 'security' => $security,
                 'merchant' => $merchant,
+                'tipo_formulario' => $todoPagoConfig['tipo_formulario'],
                 'estados' => array(
                     'inicio' => $todoPagoConfig['estado_inicio'],
                     'aprobada' => $todoPagoConfig['estado_aprobada'],
@@ -468,6 +469,7 @@ class todopagoplugin {
         global $order, $insert_id, $customer_id;
 
         $order->id = $insert_id;
+
         $this->todoPagoConfig = $this->_get_tp_configuracion();
 
         $this->logger = loggerFactory::createLogger(true, $this->todoPagoConfig['mode'], $customer_id, $order->id);
@@ -502,11 +504,10 @@ class todopagoplugin {
     }
 
     private function call_SAR($connector, $optionsSAR) {
-        global $order;
-
-        //$this->logger = new TodoPagoLogger($order->id);
+        global $order, $insert_id;
 
         $rta = $connector->sendAuthorizeRequest($optionsSAR[0], $optionsSAR[1]);
+
         if ($rta['StatusCode'] == 702 &&
             ! (empty($this->todoPagoConfig['merchant']) or empty($this->todoPagoConfig['security']) or empty($this->todoPagoConfig['header']))
         ) {
@@ -514,13 +515,14 @@ class todopagoplugin {
             $rta = $connector->sendAuthorizeRequest($optionsSAR[0], $optionsSAR[1]);
         }
         $this->logger->info("response SAR: ".json_encode($rta));
+
         if ($rta['StatusCode'] == TP_STATUS_OK) {
             $query = $this->todopagoTransaccion->recordFirstStep($order->id, $optionsSAR, $rta);
             $this->logger->info("query recordFirstStep: ".$query);
-
+            
             header('Location: '.$rta['URL_Request']);
             die();
-
+            
         } else {
             header('Location: '.tep_href_link('checkout_shipping_retry.php', '', 'SSL'));
             die();
@@ -589,3 +591,4 @@ class todopagoplugin {
         return $optionsSAR_operacion;
     }
 }
+

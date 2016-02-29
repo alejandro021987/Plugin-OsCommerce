@@ -11,6 +11,11 @@ class TodopagoTransaccion {
         $query_result_array = tep_db_fetch_array($query);
         return $query_result_array;
     }
+
+    private function getField($orderId, $fieldName){
+        $transaction = $this->getTransaction($orderId);
+        return $transaction[$fieldName];
+    }
     
     public function _getStep($orderId){
         $transaction = $this->getTransaction($orderId);
@@ -29,7 +34,15 @@ class TodopagoTransaccion {
         
         return $step;
     }
+
+    public function getRequestKey($orderId){
+        return $this->getField($orderId, 'request_key');
+    }
     
+    public function getCouponUrl($orderId){
+        return $this->getField($orderId, 'url_cupon');
+    }
+
     public function createRegister($orderId){
         if ($this->_getStep($orderId) == self::NEW_ORDER){
             tep_db_query("INSERT INTO todopago_transaccion (id_orden) VALUES (".$orderId.")");
@@ -59,8 +72,8 @@ class TodopagoTransaccion {
         $datetime = new DateTime('NOW');
         if ($this->_getStep($orderId) == self::SECOND_STEP){
             $answerKey = $paramsGAA['AnswerKey'];
-            
-            $query = "UPDATE todopago_transaccion SET second_step = '".$datetime->format('Y-m-d H:i:s')."', params_GAA = '".json_encode($paramsGAA)."', response_GAA = '".json_encode($responseGAA)."', answer_key = '".$answerKey."' WHERE id_orden = ".$orderId;
+            $url_cupon = ($responseGAA['Payload']['Answer']['ASSOCIATEDDOCUMENTATION']) ? "'".$responseGAA['Payload']['Answer']['ASSOCIATEDDOCUMENTATION']."'" : 'NULL';
+            $query = "UPDATE todopago_transaccion SET second_step = '".$datetime->format('Y-m-d H:i:s')."', params_GAA = '".json_encode($paramsGAA)."', response_GAA = '".json_encode($responseGAA)."', answer_key = '".$answerKey."', url_cupon = $url_cupon WHERE id_orden = ".$orderId;
             tep_db_query($query);
             return $query;
         }

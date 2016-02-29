@@ -1,0 +1,64 @@
+#tp-form-tph{
+	/*border:1px solid #000;*/
+}
+#tp-form-tph input, #tp-form-tph select {
+	display: block;
+	margin:8px 0px 0px 13px;
+	height: 20px;
+}
+.modal-class {
+
+}
+.modal-content {
+
+}
+#tp-bt-wrapper{
+	margin:0px 0px 0px 9px;
+}
+.tp-button{
+	margin:2px 4px 2px 3px;
+	padding: 5px 8px 6px 8px;
+}
+#tp-logo{
+	background-image: url("includes/logo_tp.png");
+	background-repeat: no-repeat;
+	height:40px;
+	width:110px;
+	margin: 12px 0 4px 32px;
+}
+#tp-content-form{
+	padding: 11px 0;
+	/*width:300px;*/
+	margin: -2px 0 0 21px;
+}
+#tp-content-form .dateFields input{	
+	width:41px;
+}
+.dateFields .spacer{	
+	margin: 14px -6px 0px 7px;
+}
+#MY_btnConfirmarPago{
+	display:none;
+}
+#codigoSeguridadTxt{
+	width:36px;
+}
+.left{
+	float:left;
+}
+.right{
+	float:right;
+}
+.clear{
+	clear:both;
+}
+.tp-label{
+	margin:12px 0 0 10px;
+}
+.messageStackError{
+	margin:5px 0 0 0;
+	padding:3px 0 3px 6px;
+}
+.messageStackError img{
+	margin: 0 3px 0 0;
+}

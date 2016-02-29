@@ -7,7 +7,6 @@
   Released under the GNU General Public License
 */
 
-    //include_once("includes/modules/payment/todopagoplugin/includes/TodoPagoLogger.php");
 require_once("includes/modules/payment/todopagoplugin/includes/todopago_ctes.php");
 require_once("includes/modules/payment/todopagoplugin/includes/Logger/loggerFactory.php");
 require('includes/application_top.php');
@@ -100,36 +99,36 @@ function callGAA($order_id) {
 }
     
 function take_action($data, $order_id) {
+
     global $todopagoTransaccion, $todoPagoConfig, $cart, $oscTemplate, $breadcrumb;
+    $todopagoTransaccion->recordSecondStep($order_id, $data['optionsGAA'], $data['rta']);
 
     if ($data['rta']['StatusCode'] == TP_STATUS_OK) {
-    
-        $todopagoTransaccion->recordSecondStep($order_id, $data['optionsGAA'], $data['rta']);
+        
         $data['logger']->debug("todoPagoConfig en take_action: ".json_encode($todoPagoConfig));
-        if ($data['rta']['Payload']['Answer']['PAYMENTMETHODNAME'] == 'PAGOFACIL' || $data['rta']['Payload']['Answer']['PAYMENTMETHODNAME']== 'RAPIPAGO' ){
-             tep_db_query('UPDATE '.TABLE_ORDERS.' SET orders_status = '.$todoPagoConfig['estado_offline'].' WHERE orders_id = '.$order_id);
+        if (!empty($data['rta']['Payload']['Answer']['ASSOCIATEDDOCUMENTATION'])){
+            tep_db_query('UPDATE '.TABLE_ORDERS.' SET orders_status = '.$todoPagoConfig['estado_offline'].' WHERE orders_id = '.$order_id);
+            $offline = true;
         }
-        else {
-    
-             tep_db_query('UPDATE '.TABLE_ORDERS.' SET orders_status = '.$todoPagoConfig['estado_aprobada'].' WHERE orders_id = '.$order_id);
+        else {       
+            tep_db_query('UPDATE '.TABLE_ORDERS.' SET orders_status = '.$todoPagoConfig['estado_aprobada'].' WHERE orders_id = '.$order_id);
+            $offline = false;
         }
   
-  $cart->reset(true);
+    $cart->reset(true);
   
-  
-  $page_content = $oscTemplate->getContent('checkout_success');
+    $page_content = $oscTemplate->getContent('checkout_success');
 
   if ( isset($HTTP_GET_VARS['action']) && ($HTTP_GET_VARS['action'] == 'update') ) {
-    tep_redirect(tep_href_link(FILENAME_DEFAULT));
+        tep_redirect(tep_href_link(FILENAME_DEFAULT));
   }
-
 
   $breadcrumb->add(NAVBAR_TITLE_1);
   $breadcrumb->add(NAVBAR_TITLE_2);
 
 ?>
 
-<h1><?php echo HEADING_TITLE; ?></h1>
+<h1><?php echo $offline? "¡Cup&oacute;n de pago generado!" : HEADING_TITLE; ?></h1>
 
 <?php echo tep_draw_form('order', tep_href_link(FILENAME_CHECKOUT_SUCCESS, 'action=update', 'SSL')); ?>
 
@@ -139,28 +138,20 @@ function take_action($data, $order_id) {
 
 <div class="contentContainer">
   <div class="buttonSet">
-  
-    <span class="buttonAction"><?php echo tep_draw_button(IMAGE_BUTTON_CONTINUE, 'triangle-1-e', null, 'primary'); ?></span>
+
     <div>
     <?php
+
+    $logo = "http://www.todopago.com.ar/sites/todopago.com.ar/files/pluginstarjeta.jpg";
     
-    $params = "";
-    // Codigo para el barcode.. cambiar.
-    /*$optionsGS = array('MERCHANT'=> $merchant, 'OPERATIONID'=>$order_id);
-    $status = $connector->getStatus($optionsGS);
-    if (!isset($status['Operations']['CARDNUMBER'])){
-        $params = _prepareBarcode($status, $order_id);
-    }*/
-    $logo = HTTP_SERVER.DIR_WS_CATALOG.'includes/modules/payment/todopagoplugin/includes/todopago.jpg';
+    echo " <div><img src='".$logo."' title='todo pago'  /></div>"; 
 
-
-    echo " <div><img src='".$logo."' title='todo pago'  /></div>"  ; 
-    if ($params != ""){
+    if ($offline){
+        $url_cupon = $todopagoTransaccion->getCouponUrl($order_id);
+        echo tep_draw_button('Descargar PDF', 'triangle-1-e', $url_cupon,'',array('newwindow' => true));
+    }
     ?>
-        <a target="_blank" href="<?php echo HTTP_SERVER.DIR_WS_CATALOG.'/ext/modules/payment/todopago/print_cupon.php?params='.base64_encode($params)?>">
-       Para descargar el cup&oacute;n de pago haga click aqu&iacute;
-        </a>
-    <?php } ?>
+    <span class="buttonAction"><?php echo tep_draw_button(IMAGE_BUTTON_CONTINUE, 'triangle-1-e', null, 'primary'); ?></span>
     </div>
   </div>
 </div>
@@ -174,32 +165,6 @@ function take_action($data, $order_id) {
             tep_redirect(tep_href_link('checkout_shipping_retry.php'));
         }
 }
-                                           
-/*function _prepareBarcode($status, $order_id) {
-    //TODO: cambiar $status por $rta2 y buscar los datos como correspone a la esructura de ducha rta
-    $params = "";
-    if (isset($rta2['Payload']['Answer']['BARCODE'])){
-    
-            $barcode = $rta2['Payload']['Answer']['BARCODE'];
-            //$barcode = 123456;
-            if($barcode != ""){
-                
-                if (isset($status['Operations']['AMOUNT'])){
-                    $amount =    $status['Operations']['AMOUNT'];
-                }
-                if (isset($status['Operations']['OPERATIONID'])){
-                    $operationid =    $status['Operations']['OPERATIONID'];
-                }
-                
-                $bartype = $rta2['Payload']['Answer']['BARCODETYPE'];
-                $name =  $customer['customers_firstname'] . ' ' . $customer['customers_lastname'];
-                
-                
-                $params = 'name='.$name.'&orden='.$order_id.'&amount='.$amount.'&logo='.$logo.'&filetype=PNG&dpi=72&scale=2&rotation=0&font_family=Arial.ttf&font_size=8&text='.$barcode.'&thickness=30&checksum=&code='.$bartype.'';
-            }
-        }
-    return $params;
-}*/
-    
-        _unregisterSessionVars(); //Necesario para el framework
-        second_step_todopago();
+
+_unregisterSessionVars(); //Necesario para el framework
+second_step_todopago();
