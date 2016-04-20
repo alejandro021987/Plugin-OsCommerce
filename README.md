@@ -5,6 +5,7 @@ Plug in para la integración con gateway de pago <strong>Todo Pago</strong>
 - [Consideraciones Generales](#consideracionesgenerales)
 - [Instalación](#instalacion)
 - [Configuración plugin](#confplugin)
+- [Obtener credenciales](#obtenercredenciales)
 - [Devoluciones] (#devoluciones)
 - [Datos adiccionales para prevención de fraude](#cybersource) 
 - [Tablas de referencia](#tablas)
@@ -64,9 +65,19 @@ a. Configuración: Se dan de alta los valores para el funcionamiento de TodoPago
 
 b. Ordenes: Aquí estarán las órdenes y el botón para Ver Status para ver las actualizaciones de estado
 
-![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf3.png)
+![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/conf-orders.png)
 
 c. Para las devoluciones se debe agregar los estados "Refund" y "Partial Refund", desde la seccion, Admin -> Localization -> Order Status.
+
+<a name="obtenercredenciales"></a>
+#Obtener crendenciales
+Se puede obtener los datos de configuracion del plugin con solo loguearte con tus credenciales de Todopago. </br>
+a. Ir a la opcion Obtener credenciales
+![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/obtenercredenciales_1.png)
+b. En el popup loguearse con el mail y password de Todopago.
+![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/obtenercredenciales_2.png)
+c. Los datos se cargaran automaticamente en los campos Merchant ID y Security code en el ambiente correspondiente (Desarrollo o produccion ) y solo hay que hacer click en el boton guardar datos y listo.
+![imagen de configuracion](https://raw.githubusercontent.com/TodoPago/imagenes/master/oscommerce/obtenercredenciales_3.png)
 
 <a name="devoluciones"></a>
 ##Devoluciones
@@ -84,17 +95,17 @@ Los campos se crean automáticamente y se asignan en Tools -> TodoPago Configura
 El plug in, toma valores estándar del framework para validar los datos del comprador.
 Para acceder a los datos del vendedor, productos y carrito se usa el  objeto $order que llega como parámetro en los métodos en los que se necesita. 
 Este es un ejemplo de la mayoría de los campos que se necesitan para comenzar la operación <br />
-'CSBTCITY' => $cart->billing['state'], 	
-'CSBTCOUNTRY' => $cart->billing['country']['iso_code_2'], 	
+'CSBTCITY' => $cart->billing['state'],  
+'CSBTCOUNTRY' => $cart->billing['country']['iso_code_2'],   
 'CSBTCUSTOMERID' => $customer_id, 
-'CSBTIPADDRESS' => $this->get_todo_pago_client_ip(), 	
-'CSBTEMAIL' => $cart->customer['email_address'], 		
+'CSBTIPADDRESS' => $this->get_todo_pago_client_ip(),    
+'CSBTEMAIL' => $cart->customer['email_address'],        
 'CSBTFIRSTNAME'=> $cart->customer['firstname'], 
 'CSBTLASTNAME'=> $cart->customer['lastname'], 
 'CSBTPHONENUMBER'=> $cart->customer['telephone'], 
-'CSBTPOSTALCODE'=> $cart->customer['postcode'], 	
+'CSBTPOSTALCODE'=> $cart->customer['postcode'],     
 'CSBTSTATE' => $this->tp_states, 
-'CSBTSTREET1' => $cart->customer['street_address'] ,	
+'CSBTSTREET1' => $cart->customer['street_address'] ,    
 
 <a name="tablas"></a>
 ## Tablas de Referencia

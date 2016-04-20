@@ -138,9 +138,14 @@ abstract class ControlFraude{
             $descriptonQuery = tep_db_query("SELECT products_description as description FROM products_description WHERE products_id = ".$item['id'].";");
 			$queryResult = tep_db_fetch_array($descriptonQuery);
 			$_description = $queryResult['description'];
-			$_description = trim($_description);
-			$_description = substr($_description, 0,15);
-			$description_array [] = str_replace("#","",$_description);
+
+			if($_description != null || $_description != ""){
+				$_description = trim($_description);
+				$_description = substr($_description, 0,40);
+			}else{
+				$_description = $item['name'];
+			}			
+			$description_array [] = utf8_encode(str_replace("#","",$_description));
 
 			$product_name = $item['name'];
 			$name_array [] = $product_name;
@@ -202,7 +207,8 @@ abstract class ControlFraude{
         else
             $ipaddress = 'UNKNOWN';
 
-        return $ipaddress;
+       // return $ipaddress;
+        return ($ipaddress == '::1') ? '192.168.0.1' : $ipaddress;
     }
 
 	private function _getProductCode($productId) {

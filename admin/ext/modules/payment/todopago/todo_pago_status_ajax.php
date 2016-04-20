@@ -33,28 +33,54 @@
 
         $logger->info("params getStatus: ".json_encode($optionsGS));
 
-        $rta4 = $connector->getStatus($optionsGS);   
+        $status = $connector->getStatus($optionsGS);
+    
+        $rta = '';
+        $refunds = $status['Operations']['REFUNDS'];
+        $refounds = $status['Operations']['refounds'];
 
-        $logger->info("rta get Status: ".json_encode($rta4));
-    
-        if (isset($rta4["Operations"])){
-    
-            $rta4 = $rta4["Operations"];
-            $tabla = "<table>";
-        
-            foreach($rta4 as $key => $value){
-        
-                $tabla .="<tr><td>".$key."</td><td>".$value."</td></tr>";
+        $auxArray = array(
+             "refound" => $refounds, 
+             "REFUND" => $refunds
+             );
+
+        if($refunds != null){  
+            $aux = 'REFUND'; 
+            $auxColection = 'REFUNDS'; 
+        }else{ 
+            $aux = 'refound';
+            $auxColection = 'refounds'; 
+        }
+
+        if (isset($status['Operations']) && is_array($status['Operations']) ) {
+            foreach ($status['Operations'] as $key => $value) {
+           
+                 if(is_array($value) && $key == $auxColection){
+                   
+                    $rta .= " $key: \n";
+                    foreach ($auxArray[$aux] as $key2 => $value2) {              
+                        $rta .= "  $aux: \n";                
+                        if(is_array($value2)){                    
+                            foreach ($value2 as $key3 => $value3) {
+                                if(is_array($value3)){                    
+                                    foreach ($value3 as $key4 => $value4) {
+                                        $rta .= "   - $key4: $value4 </br>";
+                                    }
+                                 }
+                            }
+                        }
+                    }            
+                 }else{             
+                     if(is_array($value)){
+                         $rta .= "$key: </br>";
+                     }else{
+                         $rta .= "$key: $value </br>";
+                     }
+                 } 
             }
-        
-            echo "</table>";
-        }
-        else{
-    
-            $tabla = "No hay operaciones para consultar";
-        }
-        
-    echo $tabla;
+        }else{ $rta = 'No hay operaciones para esta orden.'; }  
+
+        echo($rta);
     
     }
 ?>

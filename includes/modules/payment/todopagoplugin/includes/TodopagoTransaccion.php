@@ -73,7 +73,9 @@ class TodopagoTransaccion {
         if ($this->_getStep($orderId) == self::SECOND_STEP){
             $answerKey = $paramsGAA['AnswerKey'];
             $url_cupon = ($responseGAA['Payload']['Answer']['ASSOCIATEDDOCUMENTATION']) ? "'".$responseGAA['Payload']['Answer']['ASSOCIATEDDOCUMENTATION']."'" : 'NULL';
-            $query = "UPDATE todopago_transaccion SET second_step = '".$datetime->format('Y-m-d H:i:s')."', params_GAA = '".json_encode($paramsGAA)."', response_GAA = '".json_encode($responseGAA)."', answer_key = '".$answerKey."', url_cupon = $url_cupon WHERE id_orden = ".$orderId;
+
+
+            $query = "UPDATE todopago_transaccion SET second_step = '".$datetime->format('Y-m-d H:i:s')."', params_GAA = '".json_encode($paramsGAA)."', response_GAA = '".json_encode($responseGAA)."', answer_key = '".$answerKey."' WHERE id_orden = ".$orderId;
             tep_db_query($query);
             return $query;
         }

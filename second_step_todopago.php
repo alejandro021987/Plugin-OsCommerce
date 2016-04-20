@@ -128,7 +128,7 @@ function take_action($data, $order_id) {
 
 ?>
 
-<h1><?php echo $offline? "¡Cup&oacute;n de pago generado!" : HEADING_TITLE; ?></h1>
+<h1><?php echo $offline? "Â¡Cup&oacute;n de pago generado!" : HEADING_TITLE; ?></h1>
 
 <?php echo tep_draw_form('order', tep_href_link(FILENAME_CHECKOUT_SUCCESS, 'action=update', 'SSL')); ?>
 

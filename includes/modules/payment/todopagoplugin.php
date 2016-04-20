@@ -45,7 +45,7 @@ class todopagoplugin {
 
         if (is_object($order)) $this->update_status();
 
-        $this->logo = '/includes/modules/payment/todopagoplugin/includes/todopago.jpg';
+        $this->logo = 'http://www.todopago.com.ar/sites/todopago.com.ar/files/pluginstarjeta.jpg';
     }
 
 
@@ -66,7 +66,7 @@ class todopagoplugin {
 
         return array('id' => $this->code,
 
-                     'module' => '<img src="'.DIR_WS_CATALOG.$this->logo.'" />',
+                     'module' => '<img src="'.$this->logo.'" />',
                      'icon' => '<img src="'.DIR_WS_CATALOG.$this->logo.'" />');
 
     }
@@ -166,7 +166,6 @@ class todopagoplugin {
             tep_draw_hidden_field('url_succesfull', tep_href_link(FILENAME_CHECKOUT_PROCESS, '', 'SSL')) . 
 
             tep_draw_hidden_field('enc', MODULE_PAYMENT_TODOPAGOPLUGIN_CODE);
-        
 
     }
 
@@ -181,6 +180,7 @@ class todopagoplugin {
         $string = '';
         return $string;
     }
+
 
     function after_process() {
         $dir = DIR_WS_INCLUDES.'work'.DIRECTORY_SEPARATOR.'todopago.log';
@@ -205,23 +205,33 @@ class todopagoplugin {
         return $this->_check;
     }
 
-
-
     function install() {
 
-        tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Habilitar módulo TodoPago', 'MODULE_PAYMENT_TODOPAGOPLUGIN_STATUS', 'True', 'Desea aceptar pagos a traves de TodoPago?', '6', '3', 'tep_cfg_select_option(array(\'True\', \'False\'), ', now())");
+        ?>
+<script>
+        $('#pop-up-message').html("\
+            <p>Se le informa que se realizar&aacute;n los siguientes cambios:</p>   \
+            <ul>    \
+                <li>Se agregar&acute;n campos en la tabla de configuraci&oacute;n propios del m&oacute;dulo</li>    \
+                <li>Se agregar&acute; una tabla <em><?php echo TABLE_TP_CONFIGURACION ?></em> para parametros de configuración adicionales</li>    \
+                <li>Se agregar&aacute; una tabla <em>todopago_transaccion</em> a su base de datos la cu&aacute;l guardar&aacute; informaci&oacute;n sobre las transacciones realizadas por el medio de pago.</li>   \
+            </ul>   \
+        ");
+        $('#pop-up').show();
+</script>
 
+        <?php
+        tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values ('Habilitar módulo TodoPago', 'MODULE_PAYMENT_TODOPAGOPLUGIN_STATUS', 'True', 'Desea aceptar pagos a traves de TodoPago?', '6', '3', 'tep_cfg_select_option(array(\'True\', \'False\'), ', now())");
 
         tep_db_query("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Sort order of display.', 'MODULE_PAYMENT_TODOPAGOPLUGIN_SORT_ORDER', '0', 'Order de despliegue. El mas bajo se despliega primero.', '6', '0', now())");
 
-
         tep_db_query("CREATE TABLE IF NOT EXISTS `".TABLE_TP_ATRIBUTOS."` ( `product_id` BIGINT NOT NULL , `CSITPRODUCTCODE` VARCHAR(150) NOT NULL COMMENT 'Codigo del producto' , `CSMDD33` VARCHAR(150) NOT NULL COMMENT 'Dias para el evento' , `CSMDD34` VARCHAR(150) NOT NULL COMMENT 'Tipo de envio' , `CSMDD28` VARCHAR(150) NOT NULL COMMENT 'Tipo de servicio' , `CSMDD31` VARCHAR(150) NOT NULL COMMENT 'Tipo de delivery' ) ENGINE = MyISAM;");
 
-        tep_db_query("CREATE TABLE IF NOT EXISTS `".TABLE_TP_CONFIGURACION."` ( `idConf` INT NOT NULL PRIMARY KEY, `authorization` VARCHAR(100) NOT NULL , `segmento` VARCHAR(100) NOT NULL , `canal` VARCHAR(100) NOT NULL , `ambiente` VARCHAR(100) NOT NULL , `deadline` VARCHAR(100) NOT NULL , `test_endpoint` TEXT NOT NULL , `test_wsdl` TEXT NOT NULL , `test_merchant` VARCHAR(100) NOT NULL , `test_security` VARCHAR(100) NOT NULL , `production_endpoint` TEXT NOT NULL , `production_wsdl` TEXT NOT NULL , `production_merchant` VARCHAR(100) NOT NULL , `production_security` VARCHAR(100) NOT NULL , `estado_inicio` VARCHAR(100) NOT NULL , `estado_aprobada` VARCHAR(100) NOT NULL , `estado_rechazada` VARCHAR(100) NOT NULL , `tipo_formulario` TINYINT UNSIGNED DEFAULT 0, `estado_offline` VARCHAR(100) NOT NULL ) ENGINE = MyISAM;");
+        tep_db_query("CREATE TABLE IF NOT EXISTS `".TABLE_TP_CONFIGURACION."` ( `idConf` INT NOT NULL PRIMARY KEY, `authorization` VARCHAR(100) NOT NULL , `segmento` VARCHAR(100) NOT NULL , `canal` VARCHAR(100) NOT NULL , `ambiente` VARCHAR(100) NOT NULL , `deadline` VARCHAR(100) NOT NULL , `test_endpoint` TEXT NOT NULL , `test_wsdl` TEXT NOT NULL , `test_merchant` VARCHAR(100) NOT NULL , `test_security` VARCHAR(100) NOT NULL , `production_endpoint` TEXT NOT NULL , `production_wsdl` TEXT NOT NULL , `production_merchant` VARCHAR(100) NOT NULL , `production_security` VARCHAR(100) NOT NULL , `estado_inicio` VARCHAR(100) NOT NULL , `estado_aprobada` VARCHAR(100) NOT NULL , `estado_rechazada` VARCHAR(100) NOT NULL , `tipo_formulario` TINYINT UNSIGNED DEFAULT 0,`estado_offline` VARCHAR(100) NOT NULL, `medios_pago` TEXT NOT NULL ) ENGINE = MyISAM;");
 
         tep_db_query("DELETE FROM `".TABLE_TP_CONFIGURACION."`");
 
-        tep_db_query("INSERT INTO `".TABLE_TP_CONFIGURACION."` (`idConf`, `authorization`, `segmento`, `canal`, `ambiente`, `deadline`, `test_endpoint`, `test_wsdl`, `test_merchant`, `test_security`, `production_endpoint`, `production_wsdl`, `production_merchant`, `production_security`, `estado_inicio`, `estado_aprobada`, `estado_rechazada`, `tipo_formulario`, `estado_offline`) VALUES ('1', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')");
+        tep_db_query("INSERT INTO `".TABLE_TP_CONFIGURACION."` (`idConf`, `authorization`, `segmento`, `canal`, `ambiente`, `deadline`, `test_endpoint`, `test_wsdl`, `test_merchant`, `test_security`, `production_endpoint`, `production_wsdl`, `production_merchant`, `production_security`, `estado_inicio`, `estado_aprobada`, `estado_rechazada`, `estado_offline`, `medios_pago`) VALUES ('1', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '')");
 
         tep_db_query("CREATE TABLE IF NOT  EXISTS `".TABLE_TP_TRANSACCION."` (
                                                                `id` INT NOT NULL AUTO_INCREMENT,
@@ -235,14 +245,36 @@ class todopagoplugin {
                                                                `request_key` TEXT NULL,
                                                                `public_request_key` TEXT NULL,
                                                                `answer_key` TEXT NULL,
+                                                               `url_cupon` TEXT NULL,
                                                                PRIMARY KEY (`id`)
                                                )");
+
+        $queryResult = tep_db_query("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='".TABLE_TP_TRANSACCION."' AND column_name='url_cupon'");
+        $queryResultArray = tep_db_fetch_array($queryResult);
+
+        if (empty($queryResultArray)){
+            tep_db_query("ALTER TABLE `".TABLE_TP_TRANSACCION."` ADD COLUMN `url_cupon` TEXT NULL AFTER `answer_key`;");
+        }
     }
 
     function remove() {
 
+        /*?>
+        $('#pop-up-message').html("\
+            <p>Se le informa que se realizar&aacute;n los siguientes cambios:</p>   \
+            <ul>    \
+                <li>Se agregar&acute;n campos en la tabla de configuraci&oacute;n propios del m&oacute;dulo</li>    \
+                <li>Se agregar&acute; una tabla <em><?php echo TABLE_TP_CONFIGURACION ?></em> para parametros de configuración adicionales</li>    \
+                <li>Se agregar&aacute; una tabla <em>todopago_transaccion</em> a su base de datos la cu&aacute;l guardar&aacute; informaci&oacute;n sobre las transacciones realizadas por el medio de pago.</li>   \
+            </ul>   \
+        ");
+        $('#pop-up').show();
+
+        <?php*/
+
         tep_db_query("delete from " . TABLE_CONFIGURATION . " where configuration_key in ('" . implode("', '", $this->keys()) . "')");
-        tep_db_query("DELETE FROM todo_pago_configuracion");
+        tep_db_query("DROP TABLE todo_pago_configuracion");
+        //tep_db_query("DROP TABLE todopago_transaccion");
     }
 
 
@@ -277,13 +309,13 @@ class todopagoplugin {
                 'deadline' => $todoPagoConfig['deadline'],
                 'security' => $security,
                 'merchant' => $merchant,
-                'tipo_formulario' => $todoPagoConfig['tipo_formulario'],
                 'estados' => array(
                     'inicio' => $todoPagoConfig['estado_inicio'],
                     'aprobada' => $todoPagoConfig['estado_aprobada'],
-                    'rechazada' =>$todoPagoConfig['estado_rechazada'],
-                    'offline' =>$todoPagoConfig['estado_offline']
-                    )
+                    'rechazada' => $todoPagoConfig['estado_rechazada'],
+                    'offline' => $todoPagoConfig['estado_offline']
+                    ),
+                'medios_pago' => $todoPagoConfig['medios_pago']
                  );
     }
 
@@ -469,7 +501,6 @@ class todopagoplugin {
         global $order, $insert_id, $customer_id;
 
         $order->id = $insert_id;
-
         $this->todoPagoConfig = $this->_get_tp_configuracion();
 
         $this->logger = loggerFactory::createLogger(true, $this->todoPagoConfig['mode'], $customer_id, $order->id);
@@ -515,14 +546,23 @@ class todopagoplugin {
             $rta = $connector->sendAuthorizeRequest($optionsSAR[0], $optionsSAR[1]);
         }
         $this->logger->info("response SAR: ".json_encode($rta));
-
         if ($rta['StatusCode'] == TP_STATUS_OK) {
             $query = $this->todopagoTransaccion->recordFirstStep($order->id, $optionsSAR, $rta);
             $this->logger->info("query recordFirstStep: ".$query);
-            
-            header('Location: '.$rta['URL_Request']);
+
+            //select payment form
+            $todoPagoConfig = tep_db_query('SELECT * FROM todo_pago_configuracion');
+            $todoPagoConfig = tep_db_fetch_array($todoPagoConfig);
+            $formType = $todoPagoConfig['tipo_formulario'];
+
+            //choose form payment type
+            if($formType == 0){
+                header('Location: '.$rta['URL_Request']);
+            }elseif($formType == 1){
+                header('Location: '.tep_href_link('todopago_form_pago.php', 'id='.$insert_id, 'SSL'));
+            }
             die();
-            
+
         } else {
             header('Location: '.tep_href_link('checkout_shipping_retry.php', '', 'SSL'));
             die();
@@ -562,7 +602,11 @@ class todopagoplugin {
             'URL_ERROR' => tep_href_link('second_step_todopago.php?Order='.$order->id, '', 'SSL'),
             'Merchant' => $merchant,
             'Security' => $security_code,
-            'EncodingMethod' => 'XML'
+            'EncodingMethod' => 'XML',
+            //'AVAILABLEPAYMENTMETHODSIDS' => $this->getAvailablePaymentMethods(),
+            'PUSHNOTIFYMETHOD' => 'application/x-www-form-urlencoded',
+            'PUSHNOTIFYENDPOINT' => HTTP_SERVER.DIR_WS_CATALOG.'todopago_push_notification.php',
+            'PUSHNOTIFYSTATES' => 'CouponCharged'
         );
         return $optionsSAR_comercio;
     }
@@ -584,11 +628,10 @@ class todopagoplugin {
         $optionsSAR_operacion['CURRENCYCODE'] = '032';
         $optionsSAR_operacion['OPERATIONID'] = $order->id;
         $optionsSAR_operacion['AMOUNT'] = $order->info['total'];
-//        
+//
         //$this->logger = new TodoPagoLogger($order->id);
         $this->logger->debug("optionsSAR_operacion: ".json_encode($optionsSAR_operacion));
         
         return $optionsSAR_operacion;
     }
 }
-

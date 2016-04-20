@@ -82,7 +82,7 @@
 
                 $response = "La devolucion se realizo satisfactoriamente";
             }else{
-                $response = "Ocurrio un error en la devolucion, vuelva a intentarlo en unos minutos, codigo de error: ".$refundResponse['StatusCode'];
+                $response = "<h4>Ocurrio un error en la devolucion: " . $refundResponse['StatusMessage'] . '</h4>';
             }
         }    
         
