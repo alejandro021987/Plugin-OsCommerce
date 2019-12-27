@@ -11,10 +11,6 @@ function pushNotification(){
 
     require('includes/application_top.php');
     require_once dirname(__FILE__).'/includes/modules/payment/todopagoplugin/includes/Logger/loggerFactory.php';
-    //ini_set("date.timezone", "America/Buenos_Aires");
-    //$logger = loggerFactory::createLogger();
-
-    //$logger->debug("PushNotification: OperationId: $orderId, RequestKey: $requestKey, EventType: $eventType, EventKey: $eventKey, EventDateTime: $eventDateTime, EventData: $eventData");
 
     header("Content-Type: text/json", true);
 
